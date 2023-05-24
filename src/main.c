@@ -1,19 +1,24 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdbool.h>
-
 #include <termios.h>
 #include <fcntl.h>
+#include <time.h>
 
 #include "../include/main.h"
 
 struct{
-	bool over;
-	int rnd;
 	int width;
 	int height;
-}game;
+	int dWidth;
+	int dHeight;
+}window;
 
+struct{
+	bool over;
+	int speed;
+}game;
 
 struct{
 	int x;
@@ -26,6 +31,7 @@ struct{
 struct{
 	int x;
 	int y;
+	bool alive;
 }enemy;
 
 void SetTermFlag(int mode){
@@ -54,11 +60,9 @@ void SetTermFlag(int mode){
 }
 
 void ResetGame(){
-	game.rnd=0;
-	game.height=30;
-	game.width=20;
-	player.x=5;
-	player.y=10;
+	game.speed=7;
+	player.x=window.dHeight/2;
+	player.y=window.dWidth/2;
 	player.score=0;
 	player.length=1;
 }
@@ -66,15 +70,15 @@ void ResetGame(){
 void DrawGame(){
 	int i,j;
 	printf(CLEAR_SCREEN);
-	if(DEBUG){printf("round: %d ",game.rnd);}
-	printf("score: %d\n",player.score);
-	for(i=0;i<game.height;i++){
-		for(j=0;j<game.width;j++){
+	for(i=0;i<window.dHeight;i++){
+		for(j=0;j<window.dWidth;j++){
 			if(player.x==i && player.y==j){
-				printf("¤");
-			}else if(i==0 || i==game.height-1){
+				printf("S");
+			}else if(enemy.x==i && enemy.y==j){
+				printf("P");
+			}else if(i==0 || i==window.dHeight-1){
 				printf("-");
-			}else if(j==0 || j==game.width-1){
+			}else if(j==0 || j==window.dWidth-1){
 				printf("|");
 			}else{
 				printf(".");
@@ -82,34 +86,41 @@ void DrawGame(){
 		}
 		printf("\n");
 	}
-	game.rnd++;
+	if(player.x==enemy.x && player.y==enemy.y){
+		enemy.alive=false;
+		player.score++;
+	}
 }
 
 void UpdatePosition(){
 	switch(player.direction){
 		case 1:
-			player.y--;
-			break;
-		case 2:
-			player.y++;
-			break;
-		case 3:
-			player.x++;
-			break;
-		case 4:
 			player.x--;
 			break;
+		case 2:
+			player.x++;
+			break;
+		case 3:
+			player.y++;
+			break;
+		case 4:
+			player.y--;
+			break;
 	}
-	if(DEBUG){printf("player x is %d, y is %d\n",player.x,player.y);}
+	if(player.x<=0 || player.x>=window.dHeight-1 || player.y<=0 || player.y>=window.dWidth-1){
+		game.over=true;
+	}
+
+	if(!enemy.alive){
+		enemy.x=rand()%(window.dHeight-4)+4;
+		enemy.y=rand()%(window.dWidth-4)+4;
+		enemy.alive=true;
+	}
 }
 
 void ReadInput(){
 	int c;
 	c=getchar();
-
-	printf("here");
-	if(DEBUG){printf("c equals %d",c);sleep(1);}
-	
 	if(c==UP){
 		player.direction=1;
 	}else if(c==DOWN){
@@ -122,23 +133,25 @@ void ReadInput(){
 		game.over=true;
 	}
 }
-
 int main(){
+	
 	SetTermFlag(0);
+	window.height=30;
+	window.width=20;
+	window.dHeight=window.height-2;
+	window.dWidth=window.width-2;
 	ResetGame();
+	DrawGame();
+
+	srand(time(NULL));
 	while(!game.over){
 		ReadInput();
 		UpdatePosition();
-		if(player.x<=0 || player.x>=game.height || player.y<=0 || player.y>=game.width){
-			game.over=true;
-		}else{
-			DrawGame();
-		}
-		sleep(1);
-	}	
+		DrawGame();
+		usleep(game.speed*10000);	
+	}
 	SetTermFlag(1);
-	
-	if(DEBUG){int c;c=getchar();}
 
-	return 0;
+	return EXIT_SUCCESS;
+
 }
