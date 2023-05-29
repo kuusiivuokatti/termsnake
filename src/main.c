@@ -11,6 +11,7 @@
 
 struct{
 	int speed;
+	int speedBonus;
 	int width;
 	int height;
 	int dWidth;
@@ -57,7 +58,6 @@ void SetTermFlag(int mode){
 }
 
 void ResetGame(){
-	game.speed=7;
 	snake[0].alive=true;
 	snake[0].x=game.height/2;
 	snake[0].y=game.width/2;
@@ -77,8 +77,8 @@ void DrawGame(){
 	bool tailFound=false;
 	for(i=0;i<game.height;i++){
 		for(j=0;j<game.width;j++){
+			tailFound=false;
 			for(k=0;k<snake[0].length;k++){
-				tailFound=false;
 				if(snake[k].x==i && snake[k].y==j){
 					if(k==0){
 						printf("S");
@@ -105,7 +105,7 @@ void DrawGame(){
 	}
 	if(snake[0].x==enemy.x && snake[0].y==enemy.y){
 		enemy.alive=false;
-		snake[0].score++;
+		snake[0].score=snake[0].score+1+game.speedBonus;
 		snake[0].length++;
 	}
 }
@@ -170,6 +170,45 @@ void ReadInput(){
 	}
 }
 
+void PrintMenu(){
+	printf("%s %s\n(n)ew game\n(i)ncrease speed\n(d)ecrease speed\n(q)uit\n",NAME,VERSION);
+}
+
+int SetState(){
+	PrintMenu();
+	int state=0,c=0;
+	while(state<1){
+		c=getchar();
+		if(c=='n'){
+			state=1;
+		}else if(c=='i'){
+			if(game.speedBonus==7){
+				printf("Game speed at maximum (%d)\n",game.speedBonus);
+			}else{
+				game.speed--;
+				game.speedBonus++;
+				printf("Game speed increased (%d)\n",game.speedBonus);
+			}
+			if(DEBUG){printf("Game speed %d\n",game.speed);}
+			PrintMenu();
+		}else if(c=='d'){
+			if(game.speedBonus==0){
+				printf("Game speed at minimum (%d)\n",game.speedBonus);
+			}else{
+				game.speed++;
+				game.speedBonus--;
+				printf("Game speed decreased (%d)\n",game.speedBonus);
+			}
+			if(DEBUG){printf("Game speed %d\n",game.speed);}
+			PrintMenu();
+		}else if(c=='q'){
+			state=2;
+			printf("Exiting\n");
+		}
+	}
+	return state;
+}
+
 int main(){
 	struct winsize win;
 	ioctl(STDOUT_FILENO,TIOCGWINSZ,&win);
@@ -177,23 +216,24 @@ int main(){
 	game.width=win.ws_col/2;
 	game.dHeight=game.height-1;
 	game.dWidth=game.width-1;
+	game.speed=5;
+	game.speedBonus=5;
 	
 	SetTermFlag(0);
-	
-	snake=malloc(game.dHeight*game.dWidth*sizeof(*snake));
-	
-	ResetGame();
-	DrawGame();
 
-	srand(time(NULL));
-	while(snake[0].alive){
-		ReadInput();
-		UpdatePosition();
+	if(SetState()==1){
+		snake=malloc(game.dHeight*game.dWidth*sizeof(*snake));
+		ResetGame();
 		DrawGame();
-		usleep(game.speed*10000);	
+		srand(time(NULL));
+		while(snake[0].alive){
+			ReadInput();
+			UpdatePosition();
+			DrawGame();
+			usleep(game.speed*10000);	
+		}
+		free(snake);
 	}
-
-	free(snake);
 
 	SetTermFlag(1);
 
