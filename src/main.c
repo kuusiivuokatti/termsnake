@@ -107,6 +107,9 @@ void DrawGame(){
 		enemy.alive=false;
 		snake[0].score=snake[0].score+1+game.speedBonus;
 		snake[0].length++;
+		if(snake[0].score>=MAX_SCORE){
+			snake[0].alive=false;
+		}
 	}
 }
 
@@ -171,7 +174,7 @@ void ReadInput(){
 }
 
 void PrintMenu(){
-	printf("%s %s\n(n)ew game\n(i)ncrease speed\n(d)ecrease speed\n(q)uit\n",NAME,VERSION);
+	printf("%s %s\n(n)ew game\n(+)/(-) speed (%d)\n(q)uit\n",NAME,VERSION,game.speedBonus);
 }
 
 int SetState(){
@@ -181,29 +184,25 @@ int SetState(){
 		c=getchar();
 		if(c=='n'){
 			state=1;
-		}else if(c=='i'){
-			if(game.speedBonus==7){
-				printf("Game speed at maximum (%d)\n",game.speedBonus);
-			}else{
+		}else if(c=='+'){
+			if(game.speedBonus<7){
 				game.speed--;
 				game.speedBonus++;
-				printf("Game speed increased (%d)\n",game.speedBonus);
+				printf(CLEAR_SCREEN);
+				if(DEBUG){printf("game speed %d\n",game.speed);}
+				PrintMenu();
 			}
-			if(DEBUG){printf("Game speed %d\n",game.speed);}
-			PrintMenu();
-		}else if(c=='d'){
-			if(game.speedBonus==0){
-				printf("Game speed at minimum (%d)\n",game.speedBonus);
-			}else{
+		}else if(c=='-'){
+			if(game.speedBonus>0){
 				game.speed++;
 				game.speedBonus--;
-				printf("Game speed decreased (%d)\n",game.speedBonus);
+				printf(CLEAR_SCREEN);
+				if(DEBUG){printf("game speed %d\n",game.speed);}
+				PrintMenu();
 			}
-			if(DEBUG){printf("Game speed %d\n",game.speed);}
-			PrintMenu();
 		}else if(c=='q'){
 			state=2;
-			printf("Exiting\n");
+			printf("exiting\n");
 		}
 	}
 	return state;
@@ -219,6 +218,7 @@ int main(){
 	game.speed=5;
 	game.speedBonus=5;
 	
+	printf(CLEAR_SCREEN);
 	SetTermFlag(0);
 
 	if(SetState()==1){
@@ -233,6 +233,8 @@ int main(){
 			usleep(game.speed*10000);	
 		}
 		free(snake);
+		printf(CLEAR_SCREEN);
+		printf("game over\nscore %d\nspeed %d\n",snake[0].score,game.speed);
 	}
 
 	SetTermFlag(1);
