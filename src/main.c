@@ -51,8 +51,7 @@ void SetTermFlag(int mode){
 		fcntl(0,F_SETFL,flag);
 		term.c_lflag|=ICANON;
 
-		if(!DEBUG){term.c_lflag|=ECHO;}
-		
+		if(!DEBUG){term.c_lflag|=ECHO;}		
 		tcsetattr(0,TCSANOW,&term);
 	}
 }
@@ -103,12 +102,23 @@ void DrawGame(){
 		}
 		printf("\n");
 	}
+}
+
+void CheckStatus(){
 	if(snake[0].x==enemy.x && snake[0].y==enemy.y){
 		enemy.alive=false;
 		snake[0].score=snake[0].score+1+game.speedBonus;
 		snake[0].length++;
 		if(snake[0].score>=MAX_SCORE){
 			snake[0].alive=false;
+		}
+	}
+
+	int i=0;
+	for(i=1;i<snake[0].length;i++){
+		if(snake[0].x==snake[i].x && snake[0].y==snake[i].y){
+			snake[0].alive=false;
+			break;
 		}
 	}
 }
@@ -230,6 +240,7 @@ int main(){
 			ReadInput();
 			UpdatePosition();
 			DrawGame();
+			CheckStatus();
 			usleep(game.speed*10000);	
 		}
 		free(snake);
