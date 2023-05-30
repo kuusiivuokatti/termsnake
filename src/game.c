@@ -209,15 +209,19 @@ void CheckStatus(){
 void LoopGame(){
 	if(SetState()==1){
 		snake=malloc(game.dHeight*game.dWidth*sizeof(*snake));
-		ResetGame();
-		DrawGame();
-		srand(time(NULL));
-		while(snake[0].alive){
-			ReadInput();
-			UpdatePosition();
+		if(snake!=NULL){
+			ResetGame();
 			DrawGame();
-			CheckStatus();
-			usleep(game.speed*10000);	
+			srand(time(NULL));
+			while(snake[0].alive){
+				ReadInput();
+				UpdatePosition();
+				DrawGame();
+				CheckStatus();
+				usleep(game.speed*10000);	
+			}
+		}else{
+			printf("memory allocation failed, exiting\n");
 		}
 		free(snake);
 		printf(CLEAR_SCREEN);
